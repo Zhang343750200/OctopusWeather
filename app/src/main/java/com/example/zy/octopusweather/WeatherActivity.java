@@ -24,6 +24,7 @@ import com.example.zy.octopusweather.gson.Forecast;
 import com.example.zy.octopusweather.gson.Weather;
 import com.example.zy.octopusweather.service.AutoUpdateService;
 import com.example.zy.octopusweather.util.HttpUtil;
+import com.example.zy.octopusweather.util.QuerryPicture;
 import com.example.zy.octopusweather.util.Utility;
 
 import java.io.IOException;
@@ -47,11 +48,11 @@ public class WeatherActivity extends AppCompatActivity {
 
     private TextView titleCity;
 
-    private TextView titleUpdateTime;
-
     private TextView degreeText;
 
     private TextView weatherInfoText;
+
+//    private TextView weatherLogo;
 
     private LinearLayout forecastLayout;
 
@@ -64,6 +65,8 @@ public class WeatherActivity extends AppCompatActivity {
     private TextView carWashText;
 
     private TextView sportText;
+
+    private TextView sourceFromText;
 
     private ImageView bingPicImg;
 
@@ -83,15 +86,16 @@ public class WeatherActivity extends AppCompatActivity {
         bingPicImg = (ImageView) findViewById(R.id.bing_pic_img);
         weatherLayout = (ScrollView) findViewById(R.id.weather_layout);
         titleCity = (TextView) findViewById(R.id.title_city);
-        titleUpdateTime = (TextView) findViewById(R.id.title_update_time);
         degreeText = (TextView) findViewById(R.id.degree_text);
         weatherInfoText = (TextView) findViewById(R.id.weather_info_text);
         forecastLayout = (LinearLayout) findViewById(R.id.forecast_layout);
+//        weatherLogo = (TextView) findViewById(R.id.weather_logo);
         aqiText = (TextView) findViewById(R.id.aqi_text);
         pm25Text = (TextView) findViewById(R.id.pm25_text);
         comfortText = (TextView) findViewById(R.id.comfort_text);
         carWashText = (TextView) findViewById(R.id.car_wash_text);
         sportText = (TextView) findViewById(R.id.sport_text);
+        sourceFromText = (TextView) findViewById(R.id.source_from_text);
         swipeRefresh = (SwipeRefreshLayout) findViewById(R.id.swipe_refresh);
         swipeRefresh.setColorSchemeResources(R.color.colorPrimary);
         drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -148,8 +152,9 @@ public class WeatherActivity extends AppCompatActivity {
                             editor.apply();
                             mWeatherId = weather.basic.weatherId;
                             showWeatherInfo(weather);
+                            Toast.makeText(WeatherActivity.this, "获取天气信息成功", Toast.LENGTH_SHORT).show();
                         } else {
-                            Toast.makeText(WeatherActivity.this, "获取天气信息失败", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(WeatherActivity.this, "此城市天气情况不详", Toast.LENGTH_SHORT).show();
                         }
                         swipeRefresh.setRefreshing(false);
                     }
@@ -207,7 +212,7 @@ public class WeatherActivity extends AppCompatActivity {
         String degree = weather.now.temperature + "℃";
         String weatherInfo = weather.now.more.info;
         titleCity.setText(cityName);
-        titleUpdateTime.setText(updateTime);
+        sourceFromText.setText("天气数据来源：和风天气\n服务器数据更新时间：" + updateTime);
         degreeText.setText(degree);
         weatherInfoText.setText(weatherInfo);
         forecastLayout.removeAllViews();
@@ -217,10 +222,12 @@ public class WeatherActivity extends AppCompatActivity {
             TextView infoText = (TextView) view.findViewById(R.id.info_text);
             TextView maxText = (TextView) view.findViewById(R.id.max_text);
             TextView minText = (TextView) view.findViewById(R.id.min_text);
+            ImageView weatherLogo = (ImageView) view.findViewById(R.id.weather_logo);
             dateText.setText(forecast.date);
             infoText.setText(forecast.more.info);
-            maxText.setText(forecast.temperature.max);
-            minText.setText(forecast.temperature.min);
+            weatherLogo.setImageResource(QuerryPicture.querryPic(forecast.more.info));
+            maxText.setText(forecast.temperature.max+"℃");
+            minText.setText(forecast.temperature.min+"℃");
             forecastLayout.addView(view);
         }
         if (weather.aqi != null) {
@@ -229,7 +236,7 @@ public class WeatherActivity extends AppCompatActivity {
         }
         String comfort = "舒适度：" + weather.suggestion.comfort.info;
         String carWash = "洗车指数：" + weather.suggestion.carWash.info;
-        String sport = "运行建议：" + weather.suggestion.sport.info;
+        String sport = "运动建议：" + weather.suggestion.sport.info;
         comfortText.setText(comfort);
         carWashText.setText(carWash);
         sportText.setText(sport);

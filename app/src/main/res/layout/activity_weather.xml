@@ -44,6 +44,8 @@
 
                     <include layout="@layout/suggestion" />
 
+                    <include layout="@layout/source_from" />
+
                 </LinearLayout>
 
             </ScrollView>
