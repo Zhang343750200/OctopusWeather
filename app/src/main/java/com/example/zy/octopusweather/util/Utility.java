@@ -38,8 +38,7 @@ public class Utility {
         //开启子线程获取省级Json数据
         HttpUtil hu_pro = new HttpUtil();
         hu_pro.returnJson("http://guolin.tech/api/china");
-        while (HttpUtil.responseData == null) {}
-
+        while (HttpUtil.responseData == null) {}    //等待线程返回结果
         //返回的省级Json数据
         String responseProvince = HttpUtil.responseData;
         Log.d(TAG, "get_CN_Number: "+responseProvince);
@@ -60,7 +59,6 @@ public class Utility {
         HttpUtil hu_city = new HttpUtil();
         hu_city.returnJson("http://guolin.tech/api/china/" + String.valueOf(id_pro));
         while (HttpUtil.responseData == null) {}
-
         //返回的市级Json数据
         String responseCity = HttpUtil.responseData;
         if (!TextUtils.isEmpty(responseCity)) {
@@ -72,7 +70,6 @@ public class Utility {
                 }
             }
         }
-
         //缓存清空
         HttpUtil.responseData = null;
 
@@ -80,7 +77,6 @@ public class Utility {
         HttpUtil hu_county = new HttpUtil();
         hu_county.returnJson("http://guolin.tech/api/china/" + String.valueOf(id_pro) + "/" + String.valueOf(id_city));
         while (HttpUtil.responseData == null) {}
-
         //返回的区级Json数据
         String responseCounty = HttpUtil.responseData;
         if (!TextUtils.isEmpty(responseCounty)) {
@@ -100,6 +96,7 @@ public class Utility {
         }
         //缓存清空
         HttpUtil.responseData = null;
+
         return id_weather;
     }
 

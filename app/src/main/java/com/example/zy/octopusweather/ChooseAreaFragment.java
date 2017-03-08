@@ -48,33 +48,28 @@ public class ChooseAreaFragment extends Fragment {
 
     private static final String TAG = "zy_ChooseAreaFragment";
 
+    //ListView选择级别标志
     public static final int LEVEL_PROVINCE = 0;
     public static final int LEVEL_CITY = 1;
     public static final int LEVEL_COUNTY = 2;
-
+    //控件定义
     private ProgressDialog progressDialog;
     private TextView titleText;
     private Button backButton;
     private ListView listView;
     private ArrayAdapter<String> adapter;
     private List<String> dataList = new ArrayList<>();
-
     //定位服务控件
     private TextView gpsText;
     private Button gpsButton;
     //定位初始化
     public LocationClient mLocationClient;
-
-    //省列表
+    //省市区列表
     private List<Province> provinceList;
-    //市列表
     private List<City> cityList;
-    //县列表
     private List<County> countyList;
-
-    //选中的省份
+    //选中的省市
     private Province selectedProvince;
-    //选中的城市
     private City selectedCity;
     //当前选中的级别
     private int currentLevel;
@@ -112,6 +107,7 @@ public class ChooseAreaFragment extends Fragment {
                     selectedCity = cityList.get(position);
                     queryCounties();
                 } else if (currentLevel == LEVEL_COUNTY) {
+                    //选择完毕，显示WeatherActivity
                     String weatherId = countyList.get(position).getWeatherId();
                     if (getActivity() instanceof MainActivity) {
                         Intent intent = new Intent(getActivity(), WeatherActivity.class);
@@ -184,18 +180,26 @@ public class ChooseAreaFragment extends Fragment {
         queryProvinces();
     }
 
+    /**
+     * 请求GPS定位
+     */
     public void requestLocation() {
         initLocation();
         mLocationClient.start();
     }
 
+    /**
+     * GPS定位初始化
+     */
     private void initLocation(){
         LocationClientOption option = new LocationClientOption();
         option.setIsNeedAddress(true);
         mLocationClient.setLocOption(option);
     }
 
-    //监听器接口
+    /**
+     * 监听器接口实现
+     */
     public class MyLocationListener implements BDLocationListener {
 
         @Override
@@ -216,6 +220,7 @@ public class ChooseAreaFragment extends Fragment {
                 e.printStackTrace();
             }
 
+            //已获取weatherId，展示WeatherActivity
             if (getActivity() instanceof MainActivity) {
                 Intent intent = new Intent(getActivity(), WeatherActivity.class);
                 intent.putExtra("weather_id", weatherId);
@@ -247,7 +252,10 @@ public class ChooseAreaFragment extends Fragment {
         }
     }
 
-    //去掉地区名字的最后一个字
+    /**
+     *省市区字符串处理
+     * 去掉最后一个字（湖南省-->湖南）
+     */
     public String subString(String str) {
         return str.substring(0, str.length() - 1);
     }

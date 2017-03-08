@@ -11,21 +11,32 @@ import okhttp3.Response;
  */
 
 public class HttpUtil {
+
     private static final String TAG = "zy_HttpUtil";
 
+    //全局静态标志位，同步主线程
     public static String responseData = null;
 
+    /**
+     * http请求封装
+     */
     public static void sendOkHttpRequest(String address, okhttp3.Callback callback) {
         OkHttpClient client = new OkHttpClient();
         Request request = new Request.Builder().url(address).build();
         client.newCall(request).enqueue(callback);
     }
 
+    /**
+     * 返回http请求的json数据
+     */
     public void returnJson(String add) {
         String address = add;
         new MyThread(address).start();
     }
 
+    /**
+     * 自定义线程，实现参数传递
+     */
     class MyThread extends Thread {
         private String address;
 

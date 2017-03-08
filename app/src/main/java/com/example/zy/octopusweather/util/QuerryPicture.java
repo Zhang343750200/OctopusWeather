@@ -8,6 +8,9 @@ import com.example.zy.octopusweather.R;
 
 public class QuerryPicture {
 
+    /**
+     *查询天气信息对应的图标
+     */
     public static int querryPic(String info) {
 
         //容错处理
