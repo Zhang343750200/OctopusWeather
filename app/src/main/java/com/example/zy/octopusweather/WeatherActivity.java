@@ -38,49 +38,41 @@ import okhttp3.Response;
  */
 
 public class WeatherActivity extends AppCompatActivity {
+
+    private static final String TAG = "zy_WeatherActivity";
+
+//    //定位初始化
+//    public LocationClient mLocationClient;
+
+    //控件定义
     public DrawerLayout drawerLayout;
-
     public SwipeRefreshLayout swipeRefresh;
-
     private ScrollView weatherLayout;
-
     private Button navButton;
-
     private TextView titleCity;
-
     private TextView degreeText;
-
     private TextView weatherInfoText;
-
-//    private TextView weatherLogo;
-
     private LinearLayout forecastLayout;
-
     private TextView aqiText;
-
     private TextView pm25Text;
-
     private TextView comfortText;
-
     private TextView carWashText;
-
     private TextView sportText;
-
     private TextView sourceFromText;
-
     private ImageView bingPicImg;
-
     private String mWeatherId;
+    private Button locationButton;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (Build.VERSION.SDK_INT >= 21) {
             View decorView = getWindow().getDecorView();
-            decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                    | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+            decorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
             getWindow().setStatusBarColor(Color.TRANSPARENT);
         }
+
         setContentView(R.layout.activity_weather);
         // 初始化各控件
         bingPicImg = (ImageView) findViewById(R.id.bing_pic_img);
@@ -89,7 +81,6 @@ public class WeatherActivity extends AppCompatActivity {
         degreeText = (TextView) findViewById(R.id.degree_text);
         weatherInfoText = (TextView) findViewById(R.id.weather_info_text);
         forecastLayout = (LinearLayout) findViewById(R.id.forecast_layout);
-//        weatherLogo = (TextView) findViewById(R.id.weather_logo);
         aqiText = (TextView) findViewById(R.id.aqi_text);
         pm25Text = (TextView) findViewById(R.id.pm25_text);
         comfortText = (TextView) findViewById(R.id.comfort_text);
@@ -100,6 +91,8 @@ public class WeatherActivity extends AppCompatActivity {
         swipeRefresh.setColorSchemeResources(R.color.colorPrimary);
         drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         navButton = (Button) findViewById(R.id.nav_button);
+//        locationButton = (Button) findViewById(R.id.location_button);
+
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         String weatherString = prefs.getString("weather", null);
         if (weatherString != null) {
@@ -108,7 +101,7 @@ public class WeatherActivity extends AppCompatActivity {
             mWeatherId = weather.basic.weatherId;
             showWeatherInfo(weather);
         } else {
-            // 无缓存时去服务器查询天气
+            //无缓存时去服务器查询天气
             mWeatherId = getIntent().getStringExtra("weather_id");
             weatherLayout.setVisibility(View.INVISIBLE);
             requestWeather(mWeatherId);
@@ -244,4 +237,7 @@ public class WeatherActivity extends AppCompatActivity {
         Intent intent = new Intent(this, AutoUpdateService.class);
         startService(intent);
     }
+
+
+
 }

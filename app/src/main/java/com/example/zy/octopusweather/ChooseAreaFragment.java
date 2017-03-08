@@ -1,9 +1,14 @@
 package com.example.zy.octopusweather;
 
+import android.Manifest;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,12 +19,17 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.baidu.location.BDLocation;
+import com.baidu.location.BDLocationListener;
+import com.baidu.location.LocationClient;
+import com.baidu.location.LocationClientOption;
 import com.example.zy.octopusweather.db.City;
 import com.example.zy.octopusweather.db.County;
 import com.example.zy.octopusweather.db.Province;
 import com.example.zy.octopusweather.util.HttpUtil;
 import com.example.zy.octopusweather.util.Utility;
 
+import org.json.JSONException;
 import org.litepal.crud.DataSupport;
 
 import java.io.IOException;
@@ -35,54 +45,38 @@ import okhttp3.Response;
  */
 
 public class ChooseAreaFragment extends Fragment {
-    private static final String TAG = "ChooseAreaFragment";
+
+    private static final String TAG = "zy_ChooseAreaFragment";
 
     public static final int LEVEL_PROVINCE = 0;
-
     public static final int LEVEL_CITY = 1;
-
     public static final int LEVEL_COUNTY = 2;
 
     private ProgressDialog progressDialog;
-
     private TextView titleText;
-
     private Button backButton;
-
     private ListView listView;
-
     private ArrayAdapter<String> adapter;
-
     private List<String> dataList = new ArrayList<>();
 
-    /**
-     * 省列表
-     */
+    //定位服务控件
+    private TextView gpsText;
+    private Button gpsButton;
+    //定位初始化
+    public LocationClient mLocationClient;
+
+    //省列表
     private List<Province> provinceList;
-
-    /**
-     * 市列表
-     */
+    //市列表
     private List<City> cityList;
-
-    /**
-     * 县列表
-     */
+    //县列表
     private List<County> countyList;
 
-    /**
-     * 选中的省份
-     */
+    //选中的省份
     private Province selectedProvince;
-
-    /**
-     * 选中的城市
-     */
+    //选中的城市
     private City selectedCity;
-
-    /**
-     * 当前选中的级别
-     */
+    //当前选中的级别
     private int currentLevel;
 
 
@@ -93,6 +87,13 @@ public class ChooseAreaFragment extends Fragment {
         titleText = (TextView) view.findViewById(R.id.title_text);
         backButton = (Button) view.findViewById(R.id.back_button);
         listView = (ListView) view.findViewById(R.id.list_view);
+        gpsText = (TextView) view.findViewById(R.id.choose_area_location);
+        gpsButton = (Button) view.findViewById(R.id.choose_area_location_logo);
+
+        //定位系统初始化
+        mLocationClient = new LocationClient(ChooseAreaFragment.this.getActivity());
+        mLocationClient.registerLocationListener(new MyLocationListener());
+
         adapter = new ArrayAdapter<>(getContext(), R.layout.choose_area_item, dataList);
         listView.setAdapter(adapter);
         return view;
@@ -136,7 +137,143 @@ public class ChooseAreaFragment extends Fragment {
                 }
             }
         });
+        gpsText.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                List<String> permissionList = new ArrayList<>();
+                if (ContextCompat.checkSelfPermission(ChooseAreaFragment.this.getActivity(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    permissionList.add(Manifest.permission.ACCESS_FINE_LOCATION);
+                }
+                if (ContextCompat.checkSelfPermission(ChooseAreaFragment.this.getActivity(), Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
+                    permissionList.add(Manifest.permission.READ_PHONE_STATE);
+                }
+                if (ContextCompat.checkSelfPermission(ChooseAreaFragment.this.getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                    permissionList.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+                }
+                if (!permissionList.isEmpty()) {
+                    String [] permissions = permissionList.toArray(new String[permissionList.size()]);
+                    ActivityCompat.requestPermissions(ChooseAreaFragment.this.getActivity(), permissions, 1);
+                } else {
+                    //处理location按钮
+                    requestLocation();
+                }
+            }
+        });
+        gpsButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                List<String> permissionList = new ArrayList<>();
+                if (ContextCompat.checkSelfPermission(ChooseAreaFragment.this.getActivity(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    permissionList.add(Manifest.permission.ACCESS_FINE_LOCATION);
+                }
+                if (ContextCompat.checkSelfPermission(ChooseAreaFragment.this.getActivity(), Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
+                    permissionList.add(Manifest.permission.READ_PHONE_STATE);
+                }
+                if (ContextCompat.checkSelfPermission(ChooseAreaFragment.this.getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                    permissionList.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+                }
+                if (!permissionList.isEmpty()) {
+                    String [] permissions = permissionList.toArray(new String[permissionList.size()]);
+                    ActivityCompat.requestPermissions(ChooseAreaFragment.this.getActivity(), permissions, 1);
+                } else {
+                    //处理location按钮
+                    requestLocation();
+                }
+            }
+        });
         queryProvinces();
+    }
+
+    public void requestLocation() {
+        initLocation();
+        mLocationClient.start();
+    }
+
+    private void initLocation(){
+        LocationClientOption option = new LocationClientOption();
+        option.setIsNeedAddress(true);
+        mLocationClient.setLocOption(option);
+    }
+
+    //监听器接口
+    public class MyLocationListener implements BDLocationListener {
+
+        @Override
+        public void onReceiveLocation(BDLocation location) {
+            //省市区名称截取
+            String province = subString(location.getProvince());
+            String city = subString(location.getCity());
+            String county = subString(location.getDistrict());
+
+            mLocationClient.stop();
+            //获取天气查询id号
+            String weatherId = null;
+            try {
+                weatherId = Utility.get_CN_Number(province, city, county,getActivity());
+            } catch (JSONException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            if (getActivity() instanceof MainActivity) {
+                Intent intent = new Intent(getActivity(), WeatherActivity.class);
+                intent.putExtra("weather_id", weatherId);
+                startActivity(intent);
+                getActivity().finish();
+            } else if (getActivity() instanceof WeatherActivity) {
+                WeatherActivity activity = (WeatherActivity) getActivity();
+                activity.drawerLayout.closeDrawers();
+                activity.swipeRefresh.setRefreshing(true);
+                activity.requestWeather(weatherId);
+            }
+
+            //定位测试用例
+            /*StringBuilder currentPosition = new StringBuilder();
+            currentPosition.append("纬度：").append(location.getLatitude()).append("\n");
+            currentPosition.append("经线：").append(location.getLongitude()).append("\n");
+            currentPosition.append("国家：").append(location.getCountry()).append("\n");
+            currentPosition.append("省：").append(location.getProvince()).append("\n");
+            currentPosition.append("市：").append(location.getCity()).append("\n");
+            currentPosition.append("区：").append(location.getDistrict()).append("\n");
+            currentPosition.append("街道：").append(location.getStreet()).append("\n");
+            currentPosition.append("定位方式：");
+            if (location.getLocType() == BDLocation.TypeGpsLocation) {
+                currentPosition.append("GPS");
+            } else if (location.getLocType() == BDLocation.TypeNetWorkLocation) {
+                currentPosition.append("网络");
+            }
+            Log.d(TAG, "onReceiveLocation: " + currentPosition);*/
+        }
+    }
+
+    //去掉地区名字的最后一个字
+    public String subString(String str) {
+        return str.substring(0, str.length() - 1);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        switch (requestCode) {
+            case 1:
+                if (grantResults.length > 0) {
+                    for (int result : grantResults) {
+                        if (result != PackageManager.PERMISSION_GRANTED) {
+                            Toast.makeText(ChooseAreaFragment.this.getActivity(), "必须同意所有权限才能使用本程序", Toast.LENGTH_SHORT).show();
+                            ChooseAreaFragment.this.getActivity().finish();
+                            return;
+                        }
+                    }
+                    //处理location按钮
+                    requestLocation();
+                } else {
+                    Toast.makeText(ChooseAreaFragment.this.getActivity(), "发生未知错误", Toast.LENGTH_SHORT).show();
+                    ChooseAreaFragment.this.getActivity().finish();
+                }
+                break;
+            default:
+                break;
+        }
     }
 
     /**

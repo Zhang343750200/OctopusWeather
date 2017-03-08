@@ -29,7 +29,7 @@
             android:layout_marginLeft="10dp"
             android:layout_alignParentLeft="true"
             android:layout_alignParentBottom="true"
-            android:background="@drawable/ic_back1"
+            android:background="@drawable/ic_back"
             android:gravity="bottom"/>
     </RelativeLayout>
 
