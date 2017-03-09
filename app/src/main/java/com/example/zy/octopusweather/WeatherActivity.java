@@ -1,15 +1,19 @@
 package com.example.zy.octopusweather;
 
+import android.content.ComponentName;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
@@ -23,6 +27,7 @@ import com.bumptech.glide.Glide;
 import com.example.zy.octopusweather.gson.Forecast;
 import com.example.zy.octopusweather.gson.Weather;
 import com.example.zy.octopusweather.service.AutoUpdateService;
+import com.example.zy.octopusweather.service.NotifyService;
 import com.example.zy.octopusweather.util.HttpUtil;
 import com.example.zy.octopusweather.util.QuerryPicture;
 import com.example.zy.octopusweather.util.Utility;
@@ -41,6 +46,12 @@ public class WeatherActivity extends AppCompatActivity {
 
     private static final String TAG = "zy_WeatherActivity";
 
+    private static int flag_notify = 0;
+    private static final int on = 0;
+    private static final int off = 1;
+    private NotifyService.NotifyBinder notifyBinder;
+
+
     //控件定义
     public DrawerLayout drawerLayout;
     public SwipeRefreshLayout swipeRefresh;
@@ -58,7 +69,8 @@ public class WeatherActivity extends AppCompatActivity {
     private TextView sourceFromText;
     private ImageView bingPicImg;
     private String mWeatherId;
-    private Button locationButton;
+    private Button notify_onButton;
+    private Button notify_offButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,8 +99,47 @@ public class WeatherActivity extends AppCompatActivity {
         swipeRefresh.setColorSchemeResources(R.color.colorPrimary);
         drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         navButton = (Button) findViewById(R.id.nav_button);
+        notify_onButton = (Button) findViewById(R.id.notify_on_button);
+        notify_offButton = (Button) findViewById(R.id.notify_off_button);
 
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        //获取默认SharedPrefenences
+        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+
+        //判断用户对NotifyButton的设置
+        flag_notify=prefs.getInt("notify_flag", on);
+        if (flag_notify == on) {
+            notify_offButton.setVisibility(View.GONE);
+        } else {
+            notify_onButton.setVisibility(View.GONE);
+        }
+        notify_onButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                notify_onButton.setVisibility(View.GONE);
+                notify_offButton.setVisibility(View.VISIBLE);
+                SharedPreferences.Editor editor=PreferenceManager.getDefaultSharedPreferences(WeatherActivity.this).edit();
+                editor.putInt("notify_flag", off);
+                editor.apply();
+                Intent stop = new Intent(WeatherActivity.this, NotifyService.class);
+                stopService(stop); // 停止服务
+                unbindService(connection); // 解绑服务
+            }
+        });
+        notify_offButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                notify_onButton.setVisibility(View.VISIBLE);
+                notify_offButton.setVisibility(View.GONE);
+                SharedPreferences.Editor editor=PreferenceManager.getDefaultSharedPreferences(WeatherActivity.this).edit();
+                editor.putInt("notify_flag", on);
+                editor.apply();
+                Intent start = new Intent(WeatherActivity.this, NotifyService.class);
+                startService(start); // 启动服务
+                bindService(start, connection, BIND_AUTO_CREATE); // 绑定服务
+            }
+        });
+
+        //获取SharedPreferences中缓存的天气数据
         String weatherString = prefs.getString("weather", null);
         if (weatherString != null) {
             // 有缓存时直接解析天气数据
@@ -119,7 +170,32 @@ public class WeatherActivity extends AppCompatActivity {
         } else {
             loadBingPic();
         }
+        if (flag_notify == on) {
+            Intent notify = new Intent(this, NotifyService.class);
+            startService(notify);
+            bindService(notify, connection, BIND_AUTO_CREATE);
+        }
     }
+
+    /**
+     * bindService回调方法
+     * return mBinder
+     */
+    private ServiceConnection connection = new ServiceConnection() {
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            Log.d(TAG, "onServiceDisconnected: ");
+        }
+
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            Log.d(TAG, "onServiceConnected: ");
+            notifyBinder = (NotifyService.NotifyBinder) service;
+            //使用notifyBinder调用方法处理相应逻辑
+
+        }
+    };
 
     /**
      * 根据天气id请求城市天气信息。
@@ -214,8 +290,8 @@ public class WeatherActivity extends AppCompatActivity {
             dateText.setText(forecast.date);
             infoText.setText(forecast.more.info);
             weatherLogo.setImageResource(QuerryPicture.querryPic(forecast.more.info));
-            maxText.setText(forecast.temperature.max+"℃");
-            minText.setText(forecast.temperature.min+"℃");
+            maxText.setText(forecast.temperature.max + "℃");
+            minText.setText(forecast.temperature.min + "℃");
             forecastLayout.addView(view);
         }
         if (weather.aqi != null) {
