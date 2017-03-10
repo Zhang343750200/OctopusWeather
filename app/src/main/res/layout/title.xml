@@ -28,19 +28,12 @@
         android:layout_alignParentRight="true"
         android:layout_marginRight="10dp">
 
-        <Button
-            android:id="@+id/notify_on_button"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:layout_gravity="center_vertical"
-            android:background="@drawable/notify_on" />
-
-        <Button
-            android:id="@+id/notify_off_button"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:layout_gravity="center_vertical"
-            android:background="@drawable/notify_off" />
+        <!--<Button-->
+            <!--android:id="@+id/notify_off_button"-->
+            <!--android:layout_width="30dp"-->
+            <!--android:layout_height="30dp"-->
+            <!--android:layout_gravity="center_vertical"-->
+            <!--android:background="@drawable/notify_off" />-->
 
     </LinearLayout>
 

@@ -8,7 +8,6 @@ import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.preference.PreferenceManager;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -38,6 +37,8 @@ import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Response;
 
+import static android.preference.PreferenceManager.getDefaultSharedPreferences;
+
 /**
  * Created by zhangyi on 2017/3/6.
  */
@@ -46,11 +47,9 @@ public class WeatherActivity extends AppCompatActivity {
 
     private static final String TAG = "zy_WeatherActivity";
 
-    private static int flag_notify = 0;
-    private static final int on = 0;
-    private static final int off = 1;
+    //记录NotifyService是否在工作，1工作，0不工作
+    private static int is_notifyService_ok;
     private NotifyService.NotifyBinder notifyBinder;
-
 
     //控件定义
     public DrawerLayout drawerLayout;
@@ -69,12 +68,11 @@ public class WeatherActivity extends AppCompatActivity {
     private TextView sourceFromText;
     private ImageView bingPicImg;
     private String mWeatherId;
-    private Button notify_onButton;
-    private Button notify_offButton;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        is_notifyService_ok = 0;
         //融合背景与状态栏（Android5.0以上系统支持此功能）
         if (Build.VERSION.SDK_INT >= 21) {
             View decorView = getWindow().getDecorView();
@@ -99,46 +97,9 @@ public class WeatherActivity extends AppCompatActivity {
         swipeRefresh.setColorSchemeResources(R.color.colorPrimary);
         drawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
         navButton = (Button) findViewById(R.id.nav_button);
-        notify_onButton = (Button) findViewById(R.id.notify_on_button);
-        notify_offButton = (Button) findViewById(R.id.notify_off_button);
 
-        //获取默认SharedPrefenences
-        final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-
-        //判断用户对NotifyButton的设置
-        flag_notify=prefs.getInt("notify_flag", on);
-        if (flag_notify == on) {
-            notify_offButton.setVisibility(View.GONE);
-        } else {
-            notify_onButton.setVisibility(View.GONE);
-        }
-        notify_onButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                notify_onButton.setVisibility(View.GONE);
-                notify_offButton.setVisibility(View.VISIBLE);
-                SharedPreferences.Editor editor=PreferenceManager.getDefaultSharedPreferences(WeatherActivity.this).edit();
-                editor.putInt("notify_flag", off);
-                editor.apply();
-                Intent stop = new Intent(WeatherActivity.this, NotifyService.class);
-                stopService(stop); // 停止服务
-                unbindService(connection); // 解绑服务
-            }
-        });
-        notify_offButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                notify_onButton.setVisibility(View.VISIBLE);
-                notify_offButton.setVisibility(View.GONE);
-                SharedPreferences.Editor editor=PreferenceManager.getDefaultSharedPreferences(WeatherActivity.this).edit();
-                editor.putInt("notify_flag", on);
-                editor.apply();
-                Intent start = new Intent(WeatherActivity.this, NotifyService.class);
-                startService(start); // 启动服务
-                bindService(start, connection, BIND_AUTO_CREATE); // 绑定服务
-            }
-        });
-
+        //获取默认SharedPreferences
+        final SharedPreferences prefs = getDefaultSharedPreferences(this);
         //获取SharedPreferences中缓存的天气数据
         String weatherString = prefs.getString("weather", null);
         if (weatherString != null) {
@@ -170,11 +131,6 @@ public class WeatherActivity extends AppCompatActivity {
         } else {
             loadBingPic();
         }
-        if (flag_notify == on) {
-            Intent notify = new Intent(this, NotifyService.class);
-            startService(notify);
-            bindService(notify, connection, BIND_AUTO_CREATE);
-        }
     }
 
     /**
@@ -190,13 +146,20 @@ public class WeatherActivity extends AppCompatActivity {
 
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            Log.d(TAG, "onServiceConnected: ");
+            Log.d(TAG, "[info] onServiceConnected开始执行");
             notifyBinder = (NotifyService.NotifyBinder) service;
             //使用notifyBinder调用方法处理相应逻辑
-
+            SharedPreferences p = getDefaultSharedPreferences(WeatherActivity.this);
+            Weather weather = Utility.handleWeatherResponse(p.getString("weather", "error"));
+            String cityName = weather.basic.cityName;//城市名称
+            String weatherInfo = weather.now.more.info;//天气状态
+            String degree = weather.now.temperature + "℃";//当前气温
+            //数据传输
+            notifyBinder.transData(cityName,weatherInfo,degree);
+            //最后显示通知
+            notifyBinder.showNotify();
         }
     };
-
     /**
      * 根据天气id请求城市天气信息。
      */
@@ -211,7 +174,7 @@ public class WeatherActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         if (weather != null && "ok".equals(weather.status)) {
-                            SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(WeatherActivity.this).edit();
+                            SharedPreferences.Editor editor = getDefaultSharedPreferences(WeatherActivity.this).edit();
                             editor.putString("weather", responseText);
                             editor.apply();
                             mWeatherId = weather.basic.weatherId;
@@ -249,7 +212,7 @@ public class WeatherActivity extends AppCompatActivity {
             @Override
             public void onResponse(Call call, Response response) throws IOException {
                 final String bingPic = response.body().string();
-                SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(WeatherActivity.this).edit();
+                SharedPreferences.Editor editor = getDefaultSharedPreferences(WeatherActivity.this).edit();
                 editor.putString("bing_pic", bingPic);
                 editor.apply();
                 runOnUiThread(new Runnable() {
@@ -297,6 +260,9 @@ public class WeatherActivity extends AppCompatActivity {
         if (weather.aqi != null) {
             aqiText.setText(weather.aqi.city.aqi);
             pm25Text.setText(weather.aqi.city.pm25);
+        } else {
+            aqiText.setText(" ");
+            pm25Text.setText(" ");
         }
         String comfort = "舒适度：" + weather.suggestion.comfort.info;
         String carWash = "洗车指数：" + weather.suggestion.carWash.info;
@@ -305,8 +271,32 @@ public class WeatherActivity extends AppCompatActivity {
         carWashText.setText(carWash);
         sportText.setText(sport);
         weatherLayout.setVisibility(View.VISIBLE);
+
+
+        if (is_notifyService_ok == 0) {
+            is_notifyService_ok = 1;
+            Intent start = new Intent(this, NotifyService.class);
+            Log.d(TAG, "showWeatherInfo: 000开始启动服务");
+            startService(start); // 启动服务
+            bindService(start, connection, BIND_AUTO_CREATE); // 绑定服务
+            Log.d(TAG, "showWeatherInfo: 000服务启动成功");
+        } else {
+            Intent stop = new Intent(this,NotifyService.class);
+            Log.d(TAG, "showWeatherInfo: 111开始停止服务");
+            stopService(stop); // 停止服务
+            unbindService(connection); // 解绑服务
+            Log.d(TAG, "showWeatherInfo: 111停止服务成功");
+            Intent start = new Intent(this, NotifyService.class);
+            Log.d(TAG, "showWeatherInfo: 111开始启动新服务");
+            startService(start); // 重新启动服务
+            bindService(start, connection, BIND_AUTO_CREATE); // 重新绑定服务
+            Log.d(TAG, "showWeatherInfo: 111新服务启动成功");
+        }
+
+        //开启后台定时更新服务
         Intent intent = new Intent(this, AutoUpdateService.class);
         startService(intent);
+        Log.d(TAG, "[info] 后台定时更新服务已启动");
     }
 
 }

@@ -8,6 +8,7 @@ import android.content.SharedPreferences;
 import android.os.IBinder;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
+import android.util.Log;
 
 import com.example.zy.octopusweather.gson.Weather;
 import com.example.zy.octopusweather.util.HttpUtil;
@@ -21,6 +22,8 @@ import okhttp3.Response;
 
 public class AutoUpdateService extends Service {
 
+    private static final String TAG = "zy_AutoUpdateService";
+
     @Override
     public IBinder onBind(Intent intent) {
         return null;
@@ -30,9 +33,11 @@ public class AutoUpdateService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         updateWeather();
         updateBingPic();
+        Log.d(TAG, "onStartCommand: 后台更新完毕");
         //定时更新天气服务
         AlarmManager manager = (AlarmManager) getSystemService(ALARM_SERVICE);
         int anHour = 8 * 60 * 60 * 1000; // 更新时间为8小时
+//        int anHour = 10 * 1000; // 测试10s更新时间
         long triggerAtTime = SystemClock.elapsedRealtime() + anHour;
         Intent i = new Intent(this, AutoUpdateService.class);
         PendingIntent pi = PendingIntent.getService(this, 0, i, 0);

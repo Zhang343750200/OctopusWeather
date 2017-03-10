@@ -28,6 +28,7 @@ public class HttpUtil {
 
     /**
      * 返回http请求的json数据
+     * GPS模块
      */
     public void returnJson(String add) {
         String address = add;
@@ -36,6 +37,7 @@ public class HttpUtil {
 
     /**
      * 自定义线程，实现参数传递
+     * GPS模块
      */
     class MyThread extends Thread {
         private String address;
