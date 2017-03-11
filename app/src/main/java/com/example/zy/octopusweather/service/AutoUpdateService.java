@@ -20,6 +20,14 @@ import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Response;
 
+/**
+ * 服务名称：GetPrivacyService
+ * 功能：
+ *      天气信息的自动更新(更新时间8小时)
+ * 作者：ZhangYi
+ * 时间：2017.3.7
+ */
+
 public class AutoUpdateService extends Service {
 
     private static final String TAG = "zy_AutoUpdateService";
@@ -33,7 +41,7 @@ public class AutoUpdateService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         updateWeather();
         updateBingPic();
-        Log.d(TAG, "onStartCommand: 后台更新完毕");
+        Log.d(TAG, "[info]AutoUpdateService后台更新完毕");
         //定时更新天气服务
         AlarmManager manager = (AlarmManager) getSystemService(ALARM_SERVICE);
         int anHour = 8 * 60 * 60 * 1000; // 更新时间为8小时

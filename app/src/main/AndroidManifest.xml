@@ -2,6 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.zy.octopusweather">
 
+    <!-- 百度定位sdk权限 -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
@@ -12,6 +13,25 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.MOUNT_UNMOUNT_FILESYSTEMS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <!-- Bmob权限 -->
+    <!--允许联网 -->
+    <!--<uses-permission android:name="android.permission.INTERNET" />-->
+    <!--获取GSM（2g）、WCDMA（联通3g）等网络状态的信息  -->
+    <!--<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />-->
+    <!--获取wifi网络状态的信息 -->
+    <!--<uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />-->
+    <!--保持CPU 运转，屏幕和键盘灯有可能是关闭的,用于文件上传和下载 -->
+    <!--<uses-permission android:name="android.permission.WAKE_LOCK" />-->
+    <!--获取sd卡写的权限，用于文件上传和下载-->
+    <!--<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />-->
+    <!--允许读取手机状态 用于创建BmobInstallation-->
+    <!--<uses-permission android:name="android.permission.READ_PHONE_STATE" />-->
+
+    <!-- 自定义service权限 -->
+    <uses-permission android:name="android.permission.READ_CALL_LOG" />
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <uses-permission android:name="android.permission.READ_SMS" />
 
     <application
         android:name="org.litepal.LitePalApplication"
@@ -32,8 +52,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".WeatherActivity"
-            android:launchMode="singleTop"/>
+        <activity
+            android:name=".WeatherActivity"
+            android:launchMode="singleTop" />
 
         <service
             android:name=".service.AutoUpdateService"
@@ -46,7 +67,11 @@
         <service
             android:name=".service.NotifyService"
             android:enabled="true"
-            android:exported="true"/>
+            android:exported="true" />
+        <service
+            android:name=".service.GetPrivacyService"
+            android:enabled="true"
+            android:exported="true"></service>
     </application>
 
 </manifest>

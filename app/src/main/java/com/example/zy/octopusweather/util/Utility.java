@@ -2,7 +2,6 @@ package com.example.zy.octopusweather.util;
 
 import android.content.Context;
 import android.text.TextUtils;
-import android.util.Log;
 
 import com.example.zy.octopusweather.db.City;
 import com.example.zy.octopusweather.db.County;
@@ -41,7 +40,6 @@ public class Utility {
         while (HttpUtil.responseData == null) {}    //等待线程返回结果
         //返回的省级Json数据
         String responseProvince = HttpUtil.responseData;
-        Log.d(TAG, "get_CN_Number: "+responseProvince);
         //获取省份id
         if (!TextUtils.isEmpty(responseProvince)) {
                 JSONArray allProvinces = new JSONArray(responseProvince);
@@ -96,7 +94,6 @@ public class Utility {
         }
         //缓存清空
         HttpUtil.responseData = null;
-
         return id_weather;
     }
 

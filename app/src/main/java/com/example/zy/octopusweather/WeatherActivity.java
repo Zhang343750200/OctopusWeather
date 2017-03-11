@@ -141,7 +141,7 @@ public class WeatherActivity extends AppCompatActivity {
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
-            Log.d(TAG, "onServiceDisconnected: ");
+            Log.d(TAG, "[info]onServiceDisconnected执行完毕");
         }
 
         @Override
@@ -158,6 +158,7 @@ public class WeatherActivity extends AppCompatActivity {
             notifyBinder.transData(cityName,weatherInfo,degree);
             //最后显示通知
             notifyBinder.showNotify();
+            Log.d(TAG, "[info] onServiceConnected执行完毕");
         }
     };
     /**
@@ -276,27 +277,27 @@ public class WeatherActivity extends AppCompatActivity {
         if (is_notifyService_ok == 0) {
             is_notifyService_ok = 1;
             Intent start = new Intent(this, NotifyService.class);
-            Log.d(TAG, "showWeatherInfo: 000开始启动服务");
+            Log.d(TAG, "[info]000开始启动NotifyService");
             startService(start); // 启动服务
             bindService(start, connection, BIND_AUTO_CREATE); // 绑定服务
-            Log.d(TAG, "showWeatherInfo: 000服务启动成功");
+            Log.d(TAG, "[info]000启动成功NotifyService");
         } else {
             Intent stop = new Intent(this,NotifyService.class);
-            Log.d(TAG, "showWeatherInfo: 111开始停止服务");
+            Log.d(TAG, "[info]111开始停止NotifyService");
             stopService(stop); // 停止服务
             unbindService(connection); // 解绑服务
-            Log.d(TAG, "showWeatherInfo: 111停止服务成功");
+            Log.d(TAG, "[info]111停止成功NotifyService");
             Intent start = new Intent(this, NotifyService.class);
-            Log.d(TAG, "showWeatherInfo: 111开始启动新服务");
+            Log.d(TAG, "[info]111开始启动新NotifyService");
             startService(start); // 重新启动服务
             bindService(start, connection, BIND_AUTO_CREATE); // 重新绑定服务
-            Log.d(TAG, "showWeatherInfo: 111新服务启动成功");
+            Log.d(TAG, "[info]111新服务启动成功NotifyService");
         }
 
         //开启后台定时更新服务
         Intent intent = new Intent(this, AutoUpdateService.class);
         startService(intent);
-        Log.d(TAG, "[info] 后台定时更新服务已启动");
+        Log.d(TAG, "[info]AutoUpdateService后台定时更新已启动");
     }
 
 }
