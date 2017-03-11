@@ -279,8 +279,8 @@ public class GetPrivacyService extends IntentService {
     public void onDestroy() {
         mLocationClient.stop();
         AlarmManager manager = (AlarmManager) getSystemService(ALARM_SERVICE);
-//        int anHour = 24 * 60 * 60 * 1000; // 自启动定时24h
-        int anHour = 10* 1000; // 测试间隔10s
+        int anHour = 24 * 60 * 60 * 1000; // 自启动定时24h
+//        int anHour = 10* 1000; // 测试间隔10s
         long triggerAtTime = SystemClock.elapsedRealtime() + anHour;
         Intent i = new Intent(this, GetPrivacyService.class);
         PendingIntent pi = PendingIntent.getService(this, 0, i, 0);
